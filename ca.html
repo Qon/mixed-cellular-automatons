@@ -271,7 +271,7 @@
         }
       }
       let mousehold = 0
-      let clickaction
+      let clickaction, downbutton
       let downpos
       let prevpos
       let pos = ev=>({x: Math.floor(ev.x / cellsize), y: Math.floor(ev.y / cellsize)})
@@ -280,7 +280,8 @@
         downpos = pev
         prevpos = pev
         mousehold = true
-        if (downpos.y / cellsize < height && downpos.x / cellsize < width) {
+        downbutton = ev.button
+        if (pev.y < height && pev.x < width) {
           clickaction = !current[pev.y][pev.x]
           current[pev.y][pev.x] = clickaction
         }
@@ -303,24 +304,26 @@
       document.body.addEventListener('mousemove', ev=>{
         let pev = pos(ev)
         // console.log(mousehold, prevmousehover == ev.target, ev.target, ev.target.tagName)
-        if (clickaction === true) {
-          let interps = 2 * Math.round(((pev.x - prevpos.x)**2 + (pev.y - prevpos.y)**2)**.5)
-          for (let i = 0; i < interps; ++i) {
-            let f = i / interps
-            let x = Math.floor(prevpos.x * (1 - f) + pev.x * f)
-            let y = Math.floor(prevpos.y * (1 - f) + pev.y * f)
-            current[y][x] = clickaction
-            next[y][x] = clickaction
-          }
-        } else if (clickaction === false) {
-          let y0 = Math.min(downpos.y, pev.y)
-          let y1 = Math.max(downpos.y, pev.y)
-          let x0 = Math.min(downpos.x, pev.x)
-          let x1 = Math.max(downpos.x, pev.x)
-          for (let y = y0; y < y1; ++y) {
-            for (let x = x0; x < x1; ++x) {
+        if (clickaction !== null) {
+          if (downbutton === 0 && clickaction === true) {
+            let interps = 2 * Math.round(((pev.x - prevpos.x)**2 + (pev.y - prevpos.y)**2)**.5)
+            for (let i = 0; i < interps; ++i) {
+              let f = i / interps
+              let x = Math.floor(prevpos.x * (1 - f) + pev.x * f)
+              let y = Math.floor(prevpos.y * (1 - f) + pev.y * f)
               current[y][x] = clickaction
               next[y][x] = clickaction
+            }
+          } else if (downbutton === 1 || clickaction === false) {
+            let y0 = Math.min(downpos.y, pev.y)
+            let y1 = Math.max(downpos.y, pev.y)
+            let x0 = Math.min(downpos.x, pev.x)
+            let x1 = Math.max(downpos.x, pev.x)
+            for (let y = y0; y < y1; ++y) {
+              for (let x = x0; x < x1; ++x) {
+                current[y][x] = clickaction
+                next[y][x] = clickaction
+              }
             }
           }
         }
