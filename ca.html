@@ -303,17 +303,7 @@
       document.body.addEventListener('mousemove', ev=>{
         let pev = pos(ev)
         // console.log(mousehold, prevmousehover == ev.target, ev.target, ev.target.tagName)
-        if (clickaction != null) {
-          // let y0 = Math.min(downpos.y, pev.y)
-          // let y1 = Math.max(downpos.y, pev.y)
-          // let x0 = Math.min(downpos.x, pev.x)
-          // let x1 = Math.max(downpos.x, pev.x)
-          // for (let y = y0; y < y1; ++y) {
-          //   for (let x = x0; x < x1; ++x) {
-          //     current[y][x] = clickaction
-          //     next[y][x] = clickaction
-          //   }
-          // }
+        if (clickaction === true) {
           let interps = 2 * Math.round(((pev.x - prevpos.x)**2 + (pev.y - prevpos.y)**2)**.5)
           for (let i = 0; i < interps; ++i) {
             let f = i / interps
@@ -321,6 +311,17 @@
             let y = Math.floor(prevpos.y * (1 - f) + pev.y * f)
             current[y][x] = clickaction
             next[y][x] = clickaction
+          }
+        } else if (clickaction === false) {
+          let y0 = Math.min(downpos.y, pev.y)
+          let y1 = Math.max(downpos.y, pev.y)
+          let x0 = Math.min(downpos.x, pev.x)
+          let x1 = Math.max(downpos.x, pev.x)
+          for (let y = y0; y < y1; ++y) {
+            for (let x = x0; x < x1; ++x) {
+              current[y][x] = clickaction
+              next[y][x] = clickaction
+            }
           }
         }
         prevpos = pev
