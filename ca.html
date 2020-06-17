@@ -8,6 +8,16 @@
           return m.get(x)
         }
       }
+      let escapeRegExp = s=>s.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&")
+      function percentDecode(url) {return url.replace(/%([\da-fA-F]{2})/g, (match,p1)=>String.fromCharCode(parseInt(p1, 16)))}
+      function percentEncode(url, chars = '%:/?#[]@!$&"()*+,;=') {
+        // windows filename chars = '\\/?"*|:<>'
+        chars = chars.split('')
+        chars.forEach(c=>{
+          url = url.replace(new RegExp(escapeRegExp(c), 'g'), '%'+c.charCodeAt(0).toString(16).toUpperCase())
+        })
+        return url
+      }
       let mktag = (tag, ...children)=>{
         // console.log('mktag()', tag, ...children)
         let t
@@ -47,7 +57,33 @@
 
 
 
+      let stored_hash = document.location.hash
+      let getSettings = ()=>{
+        try {
+          console.log(document.location.hash)
+          return JSON.parse(percentDecode(document.location.hash.slice(1)))
+        } catch (error) {
+          return ({error});
+        }
+      }
+      let setSettings = (settings)=>{
+        document.location.hash = percentEncode(JSON.stringify(settings), '%/?#[]@!$&"()*+;=')
+        stored_hash = document.location.hash
+      }
 
+      let settings = getSettings()
+      console.log(settings)
+      settings.colors = settings.colors || [
+        {t: 12, c: [255, 0, 255]},
+        {t: 30, c: [0, 0, 255]},
+        {t: 200, c: [0, 150, 180]},
+        {t: 500, c: [0, 0, 130]},
+        {t: Infinity, c: [0, 0, 0]}
+      ]
+      settings.cellsize = settings.cellsize || 4
+      settings.colors = settings.colors.map(d=>{d.t = d.t == null ? Infinity : d.t; return d})
+      delete settings.error
+      setSettings(settings)
 
 
 
@@ -55,7 +91,7 @@
       let debug = false
 
       let nodecoord = new Map
-      let cellsize = 4
+      let cellsize = settings.cellsize
       let cellw = cellsize, cellh = cellsize
       let width = Math.ceil(window.innerWidth/cellw)
       let height = Math.ceil(window.innerHeight/cellh)
@@ -76,8 +112,8 @@
 
       let groupsize = 32
       let state0 = [], state1 = [], state_changestamp = [], cells = [], groups = [], groups_cts = [], groups2, groups_cts2
-      let higherfrac = (cellsize / 100)*1.5
-      let lowerfrac = 1 - (cellsize / 100)*1.5
+      let higherfrac = Math.min(0.15, (cellsize / 100)*1.5)
+      let lowerfrac = 1 - Math.min(0.15, (cellsize / 100)*1.5)
       for (let y = 0; y < height; ++y) {
         let gy = Math.floor(y / groupsize)
         state0.push([])
@@ -180,22 +216,17 @@
         // return '#000'
         // return ('#' + ('0123').split('')[Math.max(0, 3 - Math.floor(age/3))].repeat(3))
 
-        let colors = [
-          {w: 12, c: [255, 0, 255]},
-          {w: 30, c: [0, 0, 255]},
-          {w: 200, c: [0, 150, 180]},
-          {w: 500, c: [0, 0, 150]},
-          {w: Infinity, c: [0, 0, 0]}
-        ]
+        let colors = settings.colors
+
         let a = 0, i = 0
-        while (a + colors[i].w < age && i < colors.length - 2) {
-          a += colors[i].w
+        while (a + colors[i].t < age && i < colors.length - 2) {
+          a += colors[i].t
           ++i
         }
         // console.log(i)
         let c0 = colors[i]
         let c1 = colors[i + 1]
-        let aw = Math.min(1, (age - a) / c0.w)
+        let aw = Math.min(1, (age - a) / c0.t)
         // if (aw > 1 || aw < 0) console.log(aw, age)
         let awi = 1 - aw
         return `rgb(${awi*c0.c[0] + aw*c1.c[0]}, ${awi*c0.c[1] + aw*c1.c[1]}, ${awi*c0.c[2] + aw*c1.c[2]})`
@@ -240,42 +271,82 @@
         }
       }
       let mousehold = 0
-      let prevmousehover = null
       let clickaction
+      let downpos
+      let prevpos
+      let pos = ev=>({x: Math.floor(ev.x / cellsize), y: Math.floor(ev.y / cellsize)})
       document.body.addEventListener('mousedown', ev=>{
+        let pev = pos(ev)
+        downpos = pev
+        prevpos = pev
         mousehold = true
-        if (!ev.target.tagName == 'TD') return;
-        let coord = nodecoord.get(ev.target)
-        let [x, y] = coord
-        clickaction = !current[y][x]
+        if (downpos.y / cellsize < height && downpos.x / cellsize < width) {
+          clickaction = !current[pev.y][pev.x]
+          current[pev.y][pev.x] = clickaction
+        }
       })
       document.body.addEventListener('mouseup', ev=>{mousehold = false; clickaction = null})
+      // document.body.addEventListener('dblclick', ev=>{
+      //   console.log('dblclick')
+      //   let pev = pos(ev)
+      //   let y0 = Math.max(pev.y - groupsize, 0)
+      //   let y1 = Math.min(pev.y + groupsize, width)
+      //   let x0 = Math.max(pev.x - groupsize, 0)
+      //   let x1 = Math.min(pev.x + groupsize, width)
+      //   for (let y = y0; y < y1; ++y) {
+      //     for (let x = x0; x < x1; ++x) {
+      //       current[y][x] = clickaction
+      //       next[y][x] = clickaction
+      //     }
+      //   }
+      // })
       document.body.addEventListener('mousemove', ev=>{
+        let pev = pos(ev)
         // console.log(mousehold, prevmousehover == ev.target, ev.target, ev.target.tagName)
-        if (prevmousehover != ev.target && mousehold && ev.target.tagName == 'TD') {
-          let coord = nodecoord.get(ev.target)
-          let [x, y] = coord
-          current[y][x] = clickaction
-          cells[y][x].classList[clickaction ? 'add' : 'remove']('on')
+        if (clickaction != null) {
+          // let y0 = Math.min(downpos.y, pev.y)
+          // let y1 = Math.max(downpos.y, pev.y)
+          // let x0 = Math.min(downpos.x, pev.x)
+          // let x1 = Math.max(downpos.x, pev.x)
+          // for (let y = y0; y < y1; ++y) {
+          //   for (let x = x0; x < x1; ++x) {
+          //     current[y][x] = clickaction
+          //     next[y][x] = clickaction
+          //   }
+          // }
+          let interps = 2 * Math.round(((pev.x - prevpos.x)**2 + (pev.y - prevpos.y)**2)**.5)
+          for (let i = 0; i < interps; ++i) {
+            let f = i / interps
+            let x = Math.floor(prevpos.x * (1 - f) + pev.x * f)
+            let y = Math.floor(prevpos.y * (1 - f) + pev.y * f)
+            current[y][x] = clickaction
+            next[y][x] = clickaction
+          }
         }
-        prevmousehover = ev.target
+        prevpos = pev
       })
-      document.body.addEventListener('click', ev=>{
-        if (!ev.target.tagName == 'TD') return;
-        let coord = nodecoord.get(ev.target)
-        let [x, y] = coord
-        next[y][x] = current[y][x] = !current[y][x]
-        cells[y][x].classList[current[y][x] ? 'add' : 'remove']('on')
-      })
+      // document.body.addEventListener('click', ev=>{
+      //   if (!ev.target.tagName == 'TD') return;
+      //   let coord = nodecoord.get(ev.target)
+      //   let [x, y] = coord
+      //   next[y][x] = current[y][x] = !current[y][x]
+      //   cells[y][x].classList[current[y][x] ? 'add' : 'remove']('on')
+      // })
       let timeevo, timeupdate, timeupdate2, step = 0
-      setInterval(()=>{
+      let step_f = ()=>{
+        if (stored_hash != null && document.location.hash != stored_hash) {
+          stored_hash = null
+          document.location.reload()
+        }
         timeevo = new Date()
         evolve(step)
         timeupdate = new Date()
         update(step)
         if (step % 253 == 0) console.log(timeupdate - timeevo, new Date() - timeupdate)
         ++step
-      }, 16)
+        window.requestAnimationFrame(step_f)
+      }
+      window.requestAnimationFrame(step_f)
     </script>
   </body>
 </html>
