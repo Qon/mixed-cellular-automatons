@@ -81,7 +81,7 @@
         {t: 500, c: [0, 0, 130]},
         {t: Infinity, c: [0, 0, 0]}
       ]
-      settings.toprule    = settings.toprule    != null ? settings.toprule    : 110
+      settings.toprule    = settings.toprule    != null ? settings.toprule    : 30
       settings.bottomrule = settings.bottomrule != null ? settings.bottomrule : 30
       settings.cellsize   = settings.cellsize || 4
 
@@ -235,6 +235,10 @@
             }
           }
         }
+        for (let y = 0; y < height; ++y)
+          for (let x = 0; x < width; ++x)
+            if (current[y][x] != next[y][x])
+              state_changestamp[y][x] = step
         update_groups2()
         ;[current, next] = [next, current]
       }
@@ -244,18 +248,15 @@
       //             return (q && !xx[i] || !q && xx[i]) ? 1 : 0
       //           }).join(''), 2)
       // }
-      let update = (step)=>{
+      let update = (step, full)=>{
         for (let y = 0; y < height; ++y) {
           for (let x = 0; x < width; ++x) {
             let state = current[y][x]
             let prevstate = next[y][x]
-            if (prevstate != state) {
-              state_changestamp[y][x] = step
-            }
             let age = Math.min(1e4, step - state_changestamp[y][x])
-            if (((!state
+            if (full || ((!state
                 && !((step ^ x ^ y) % Math.floor(age / 10))
-              ) || prevstate != state)) {
+              ) || state_changestamp[y][x] == step)) {
               ctx.fillStyle = state ? live_col : make_col(age)
               ctx.fillRect(x*cellw, y*cellh, cellw, cellh)
             }
@@ -336,6 +337,20 @@
         }
         prevpos = pev
       })
+      let speedmode = 1, fullrender = 0
+      document.body.addEventListener('keydown', ev=>{
+        console.log(ev)
+        switch (ev.key) {
+          case ' ': speedmode = 101; break;
+          case 's': speedmode = 101; break;
+          case 'f': fullrender = 1; break;
+        }
+      })
+      document.body.addEventListener('keyup', ev=>{
+        switch (ev.key) {
+          case ' ': fullrender = 1; break;
+        }
+      })
       // document.body.addEventListener('click', ev=>{
       //   if (!ev.target.tagName == 'TD') return;
       //   let coord = nodecoord.get(ev.target)
@@ -350,11 +365,13 @@
           document.location.reload()
         }
         timeevo = new Date()
-        evolve(step)
+        for (let i = 0; i < speedmode; ++i, ++step)
+          evolve(step)
         timeupdate = new Date()
-        update(step)
+        update(step - 1, fullrender)
+        speedmode = 1
+        fullrender = 0
         if (step % 253 == 0) console.log(timeupdate - timeevo, new Date() - timeupdate)
-        ++step
         window.requestAnimationFrame(step_f)
       }
       window.requestAnimationFrame(step_f)
