@@ -74,17 +74,22 @@
       let settings = getSettings()
       console.log(settings)
       settings.colors = settings.colors || [
+        {t: -1, c: [255, 255, 255]},
         {t: 12, c: [255, 0, 255]},
         {t: 30, c: [0, 0, 255]},
         {t: 200, c: [0, 150, 180]},
         {t: 500, c: [0, 0, 130]},
         {t: Infinity, c: [0, 0, 0]}
       ]
-      settings.cellsize = settings.cellsize || 4
+      settings.toprule    = settings.toprule    != null ? settings.toprule    : 110
+      settings.bottomrule = settings.bottomrule != null ? settings.bottomrule : 30
+      settings.cellsize   = settings.cellsize || 4
+
       settings.colors = settings.colors.map(d=>{d.t = d.t == null ? Infinity : d.t; return d})
       delete settings.error
       setSettings(settings)
 
+      let live_col = `rgb(${settings.colors[0].c.join(',')})`
 
 
 
@@ -103,11 +108,32 @@
           background: #000;
         }`
       )))
+
+      let make_col = memoize((age)=>{
+        // return '#000'
+        // return ('#' + ('0123').split('')[Math.max(0, 3 - Math.floor(age/3))].repeat(3))
+
+        let colors = settings.colors
+
+        let a = 0, i = 0
+        while (a + colors[i].t < age && i < colors.length - 2) {
+          a += colors[i].t
+          ++i
+        }
+        // console.log(i)
+        let c0 = colors[i]
+        let c1 = colors[i + 1]
+        let aw = Math.min(1, (age - a) / c0.t)
+        // if (aw > 1 || aw < 0) console.log(aw, age)
+        let awi = 1 - aw
+        return `rgb(${awi*c0.c[0] + aw*c1.c[0]}, ${awi*c0.c[1] + aw*c1.c[1]}, ${awi*c0.c[2] + aw*c1.c[2]})`
+      })
+
       let frag = mktag('fragment')
       let canvas = mktag('canvas', {width: width*cellw, height: height*cellh})
       frag.appendChild(canvas)
       let ctx = canvas.getContext('2d')
-      ctx.fillStyle = '#000'
+      ctx.fillStyle = make_col(1e6)
       ctx.fillRect(0, 0, width*cellw, height*cellh)
 
       let groupsize = 32
@@ -190,11 +216,11 @@
         for (let y = 0; y < height; ++y) {
           let gy = Math.floor(y / groupsize)
           if (y == height - 1) {
-            next[y] = ruleEvo(30, current[y])
+            next[y] = ruleEvo(settings.bottomrule, current[y])
             groups[gy] = groups[gy].map(()=>1)
           } else {
             if (y > height * higherfrac && !(y-1 > height * higherfrac)) {
-              next[y] = ruleEvo(30, current[y + 1])
+              next[y] = ruleEvo(settings.toprule, current[y + 1])
               groups[gy] = groups[gy].map(()=>1)
             } else if (y < height * higherfrac || y > height * lowerfrac) {
               next[y] = current[wrapy(y + 1)].map(v=>v)
@@ -212,25 +238,6 @@
         update_groups2()
         ;[current, next] = [next, current]
       }
-      let make_col = memoize((age)=>{
-        // return '#000'
-        // return ('#' + ('0123').split('')[Math.max(0, 3 - Math.floor(age/3))].repeat(3))
-
-        let colors = settings.colors
-
-        let a = 0, i = 0
-        while (a + colors[i].t < age && i < colors.length - 2) {
-          a += colors[i].t
-          ++i
-        }
-        // console.log(i)
-        let c0 = colors[i]
-        let c1 = colors[i + 1]
-        let aw = Math.min(1, (age - a) / c0.t)
-        // if (aw > 1 || aw < 0) console.log(aw, age)
-        let awi = 1 - aw
-        return `rgb(${awi*c0.c[0] + aw*c1.c[0]}, ${awi*c0.c[1] + aw*c1.c[1]}, ${awi*c0.c[2] + aw*c1.c[2]})`
-      })
       // let xor = (x, y)=>{
       //   let xx = x.toString(2).padStart(8, 0).slice(-8).split('').map(s=>Number(s))
       //   return parseInt(y.toString(2).padStart(8, 0).slice(-8).split('').map(s=>Number(s)).map((q, i)=>{
@@ -249,13 +256,13 @@
             if (((!state
                 && !((step ^ x ^ y) % Math.floor(age / 10))
               ) || prevstate != state)) {
-              ctx.fillStyle = state ? '#fff' : make_col(age)
+              ctx.fillStyle = state ? live_col : make_col(age)
               ctx.fillRect(x*cellw, y*cellh, cellw, cellh)
             }
           }
         }
         if (debug && Math.random() < 0.2) {
-          ctx.fillStyle = '#000'
+          ctx.fillStyle = make_col(1e6)
           ctx.fillRect(0, 0, width*cellw, height*cellh)
           let all = 0, c = 0
           groups.map((ay, y)=>{
