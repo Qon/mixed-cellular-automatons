@@ -60,8 +60,12 @@
       let stored_hash = document.location.hash
       let getSettings = ()=>{
         try {
-          console.log(document.location.hash)
-          return JSON.parse(percentDecode(document.location.hash.slice(1)))
+          // console.log(document.location.hash)
+          let h = document.location.hash.slice(1)
+          if (h[0] != '{' /*}*/) {
+            h = atob(h)
+          }
+          return JSON.parse(percentDecode(h))
         } catch (error) {
           return ({error});
         }
@@ -294,7 +298,11 @@
           current[pev.y][pev.x] = clickaction
         }
       })
-      document.body.addEventListener('mouseup', ev=>{mousehold = false; clickaction = null})
+      document.body.addEventListener('mouseup', ev=>{
+        mousehold = false
+        clickaction = null
+        fullrender = 1
+      })
       // document.body.addEventListener('dblclick', ev=>{
       //   console.log('dblclick')
       //   let pev = pos(ev)
