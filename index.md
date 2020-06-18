@@ -1,9 +1,9 @@
 [Cellular Automatons](https://qon.github.io/mixed-cellular-automatons/ca.html)
 Inspired by a [video](https://www.youtube.com/watch?v=IK7nBOLYzdE) by Elliot Waite
 
-With [rainbows](https://qon.github.io/mixed-cellular-automatons/ca.html#{%22colors%22:%5B{%22t%22:-1,%22c%22:%5B255,255,255%5D},{%22t%22:15,%22c%22:%5B255,0,255%5D},{%22t%22:30,%22c%22:%5B0,0,255%5D},{%22t%22:45,%22c%22:%5B0,255,255%5D},{%22t%22:60,%22c%22:%5B0,255,0%5D},{%22t%22:100,%22c%22:%5B255,255,0%5D},{%22t%22:480,%22c%22:%5B255,0,0%5D},{%22t%22:null,%22c%22:%5B0,0,0%5D}%5D,%22cellsize%22:4})!
+With [rainbows](https://qon.github.io/mixed-cellular-automatons/ca.html#eyJjb2xvcnMiOlt7InQiOi0xLCJjIjpbMjU1LDI1NSwyNTVdfSx7InQiOjE1LCJjIjpbMjU1LDAsMjU1XX0seyJ0IjozMCwiYyI6WzAsMCwyNTVdfSx7InQiOjQ1LCJjIjpbMCwyNTUsMjU1XX0seyJ0Ijo2MCwiYyI6WzAsMjU1LDBdfSx7InQiOjEwMCwiYyI6WzI1NSwyNTUsMF19LHsidCI6NDgwLCJjIjpbMjU1LDAsMF19LHsidCI6bnVsbCwiYyI6WzAsMCwwXX1dLCJjZWxsc2l6ZSI6NH0=)!
 
-Different [rulesets](https://qon.github.io/mixed-cellular-automatons/ca.html#{%22colors%22:%5B{%22t%22:-1,%22c%22:%5B255,255,255%5D},{%22t%22:15,%22c%22:%5B255,0,255%5D},{%22t%22:30,%22c%22:%5B0,0,255%5D},{%22t%22:45,%22c%22:%5B0,255,255%5D},{%22t%22:60,%22c%22:%5B0,255,0%5D},{%22t%22:100,%22c%22:%5B255,255,0%5D},{%22t%22:480,%22c%22:%5B255,0,0%5D},{%22t%22:null,%22c%22:%5B0,0,0%5D}%5D,"toprule":110,"bottomrule":110,%22cellsize%22:4})
+Different [rulesets](https://qon.github.io/mixed-cellular-automatons/ca.html#eyUyMmNvbG9ycyUyMjolNUJ7JTIydCUyMjotMSwlMjJjJTIyOiU1QjI1NSwyNTUsMjU1JTVEfSx7JTIydCUyMjoxNSwlMjJjJTIyOiU1QjI1NSwwLDI1NSU1RH0seyUyMnQlMjI6MzAsJTIyYyUyMjolNUIwLDAsMjU1JTVEfSx7JTIydCUyMjo0NSwlMjJjJTIyOiU1QjAsMjU1LDI1NSU1RH0seyUyMnQlMjI6NjAsJTIyYyUyMjolNUIwLDI1NSwwJTVEfSx7JTIydCUyMjoxMDAsJTIyYyUyMjolNUIyNTUsMjU1LDAlNUR9LHslMjJ0JTIyOjQ4MCwlMjJjJTIyOiU1QjI1NSwwLDAlNUR9LHslMjJ0JTIyOm51bGwsJTIyYyUyMjolNUIwLDAsMCU1RH0lNUQsInRvcHJ1bGUiOjExMCwiYm90dG9tcnVsZSI6MTEwLCUyMmNlbGxzaXplJTIyOjR9)
  are also possible, like rule 110 at bottom and top!
 
 Edit cellsize in url to larger values for larger cells and better performance.
