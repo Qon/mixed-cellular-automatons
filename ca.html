@@ -100,11 +100,11 @@
         settings = getSettings()
         console.log(settings)
         settings.colors = settings.colors || [
-          {t: -1, c: [255, 255, 255]},
-          {t: 12, c: [255, 0, 255]},
-          {t: 30, c: [0, 0, 255]},
-          {t: 200, c: [0, 150, 180]},
-          {t: 500, c: [0, 0, 130]},
+          {t: -1, c: [1, 1, 1]},
+          {t: 15, c: [1, 0, 1]},
+          {t: 45, c: [0, 0, 1]},
+          {t: 300, c: [0, 0.67, 0.8]},
+          {t: 999, c: [0, 0.1, 0.50]},
           {t: Infinity, c: [0, 0, 0]}
         ]
         settings.toprule    = settings.toprule    != null ? settings.toprule    : 30
@@ -112,8 +112,15 @@
         settings.cellsize   = settings.cellsize || 4
 
         settings.colors = settings.colors.map(d=>{d.t = d.t == null ? Infinity : d.t; return d})
+        if (!settings.colors.every(d=>d.c.every(rgb=>rgb <= 1)))
+          settings.colors.forEach(d=>d.c = d.c.map(x=>Math.round(x / 255 * 1e3) / 1e3))
+
         delete settings.error
+
         setSettings(settings)
+
+        if (settings.colors.every(d=>d.c.every(rgb=>rgb <= 1)))
+          settings.colors.forEach(d=>d.c = d.c.map(rgb=>Math.round(rgb * 255)))
 
         live_col = `rgb(${settings.colors[0].c.join(',')})`
         make_col = memoize(make_col_)
