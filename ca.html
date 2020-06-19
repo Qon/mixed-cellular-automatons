@@ -55,7 +55,25 @@
       }
 
 
+      let make_col_ = (age)=>{
+        // return '#000'
+        // return ('#' + ('0123').split('')[Math.max(0, 3 - Math.floor(age/3))].repeat(3))
 
+        let colors = settings.colors
+
+        let a = 0, i = 0
+        while (a + colors[i].t < age && i < colors.length - 2) {
+          a += colors[i].t
+          ++i
+        }
+        // console.log(i)
+        let c0 = colors[i]
+        let c1 = colors[i + 1]
+        let aw = Math.min(1, (age - a) / c0.t)
+        // if (aw > 1 || aw < 0) console.log(aw, age)
+        let awi = 1 - aw
+        return `rgb(${awi*c0.c[0] + aw*c1.c[0]}, ${awi*c0.c[1] + aw*c1.c[1]}, ${awi*c0.c[2] + aw*c1.c[2]})`
+      }
 
       let stored_hash = document.location.hash
       let getSettings = ()=>{
@@ -75,25 +93,34 @@
         stored_hash = document.location.hash
       }
 
-      let settings = getSettings()
-      console.log(settings)
-      settings.colors = settings.colors || [
-        {t: -1, c: [255, 255, 255]},
-        {t: 12, c: [255, 0, 255]},
-        {t: 30, c: [0, 0, 255]},
-        {t: 200, c: [0, 150, 180]},
-        {t: 500, c: [0, 0, 130]},
-        {t: Infinity, c: [0, 0, 0]}
-      ]
-      settings.toprule    = settings.toprule    != null ? settings.toprule    : 30
-      settings.bottomrule = settings.bottomrule != null ? settings.bottomrule : 30
-      settings.cellsize   = settings.cellsize || 4
+      let settings, live_col, make_col
 
-      settings.colors = settings.colors.map(d=>{d.t = d.t == null ? Infinity : d.t; return d})
-      delete settings.error
-      setSettings(settings)
 
-      let live_col = `rgb(${settings.colors[0].c.join(',')})`
+      let readSettings = ()=>{
+        settings = getSettings()
+        console.log(settings)
+        settings.colors = settings.colors || [
+          {t: -1, c: [255, 255, 255]},
+          {t: 12, c: [255, 0, 255]},
+          {t: 30, c: [0, 0, 255]},
+          {t: 200, c: [0, 150, 180]},
+          {t: 500, c: [0, 0, 130]},
+          {t: Infinity, c: [0, 0, 0]}
+        ]
+        settings.toprule    = settings.toprule    != null ? settings.toprule    : 30
+        settings.bottomrule = settings.bottomrule != null ? settings.bottomrule : 30
+        settings.cellsize   = settings.cellsize || 4
+
+        settings.colors = settings.colors.map(d=>{d.t = d.t == null ? Infinity : d.t; return d})
+        delete settings.error
+        setSettings(settings)
+
+        live_col = `rgb(${settings.colors[0].c.join(',')})`
+        make_col = memoize(make_col_)
+        return settings
+      }
+      readSettings()
+
 
 
 
@@ -112,26 +139,6 @@
           background: #000;
         }`
       )))
-
-      let make_col = memoize((age)=>{
-        // return '#000'
-        // return ('#' + ('0123').split('')[Math.max(0, 3 - Math.floor(age/3))].repeat(3))
-
-        let colors = settings.colors
-
-        let a = 0, i = 0
-        while (a + colors[i].t < age && i < colors.length - 2) {
-          a += colors[i].t
-          ++i
-        }
-        // console.log(i)
-        let c0 = colors[i]
-        let c1 = colors[i + 1]
-        let aw = Math.min(1, (age - a) / c0.t)
-        // if (aw > 1 || aw < 0) console.log(aw, age)
-        let awi = 1 - aw
-        return `rgb(${awi*c0.c[0] + aw*c1.c[0]}, ${awi*c0.c[1] + aw*c1.c[1]}, ${awi*c0.c[2] + aw*c1.c[2]})`
-      })
 
       let frag = mktag('fragment')
       let canvas = mktag('canvas', {width: width*cellw, height: height*cellh})
@@ -259,7 +266,7 @@
             let prevstate = next[y][x]
             let age = Math.min(1e4, step - state_changestamp[y][x])
             if (full || ((!state
-                && !((step ^ x ^ y) % Math.floor(age / 10))
+                && !((step ^ x ^ y) %  Math.floor(Math.max(0, age - 20) ** .5))
               ) || state_changestamp[y][x] == step)) {
               ctx.fillStyle = state ? live_col : make_col(age)
               ctx.fillRect(x*cellw, y*cellh, cellw, cellh)
@@ -347,7 +354,7 @@
       })
       let speedmode = 1, fullrender = 0
       document.body.addEventListener('keydown', ev=>{
-        console.log(ev)
+        // console.log(ev)
         switch (ev.key) {
           case ' ': speedmode = 101; break;
           case 's': speedmode = 101; break;
@@ -369,8 +376,11 @@
       let timeevo, timeupdate, timeupdate2, step = 0
       let step_f = ()=>{
         if (stored_hash != null && document.location.hash != stored_hash) {
-          stored_hash = null
-          document.location.reload()
+          stored_hash = document.location.hash
+          let oldSettings = settings
+          settings = readSettings()
+          if (['cellsize'].some(n=>oldSettings[n] != settings[n]))
+            document.location.reload()
         }
         timeevo = new Date()
         for (let i = 0; i < speedmode; ++i, ++step)
