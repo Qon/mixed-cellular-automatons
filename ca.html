@@ -91,6 +91,7 @@
       let setSettings = (settings)=>{
         document.location.hash = percentEncode(JSON.stringify(settings), '%/?#[]@!$&"()*+;=')
         stored_hash = document.location.hash
+        console.log(document.location.href.replace(/#.*/, '') + '#' + btoa(stored_hash.slice(1)))
       }
 
       let settings, live_col, make_col
